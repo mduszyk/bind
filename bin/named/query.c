@@ -2792,6 +2792,82 @@ query_add_cname(ns_client_t *client, dns_name_t *qname, dns_name_t *tname,
 }
 
 /*
+ * This function allows to return any answer to client.
+ */
+static isc_result_t
+query_add_result(ns_client_t *client, dns_rdatatype_t type,
+    unsigned char *data, unsigned int data_len, dns_ttl_t ttl)
+{
+	dns_rdataset_t *rdataset;
+	dns_rdatalist_t *rdatalist;
+	dns_rdata_t *rdata;
+	dns_name_t *aname;
+	isc_result_t result;
+
+	aname = NULL;
+	result = dns_message_gettempname(client->message, &aname);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+	result = dns_name_dup(client->query.qname, client->mctx, aname);
+	if (result != ISC_R_SUCCESS) {
+		dns_message_puttempname(client->message, &aname);
+		return (result);
+	}
+    
+    aname->attributes |= DNS_NAMEATTR_ANSWER;
+
+	rdatalist = NULL;
+	result = dns_message_gettemprdatalist(client->message, &rdatalist);
+	if (result != ISC_R_SUCCESS) {
+		dns_message_puttempname(client->message, &aname);
+		return (result);
+	}
+	rdata = NULL;
+	result = dns_message_gettemprdata(client->message, &rdata);
+	if (result != ISC_R_SUCCESS) {
+		dns_message_puttempname(client->message, &aname);
+		dns_message_puttemprdatalist(client->message, &rdatalist);
+		return (result);
+	}
+	rdataset = NULL;
+	result = dns_message_gettemprdataset(client->message, &rdataset);
+	if (result != ISC_R_SUCCESS) {
+		dns_message_puttempname(client->message, &aname);
+		dns_message_puttemprdatalist(client->message, &rdatalist);
+		dns_message_puttemprdata(client->message, &rdata);
+		return (result);
+	}
+	dns_rdataset_init(rdataset);
+	rdatalist->type = type;
+	rdatalist->covers = 0;
+	rdatalist->rdclass = client->message->rdclass;
+	rdatalist->ttl = ttl;
+
+	rdata->data = data;
+	rdata->length = data_len;
+	rdata->rdclass = client->message->rdclass;
+	rdata->type = type;
+
+	ISC_LIST_INIT(rdatalist->rdata);
+	ISC_LIST_APPEND(rdatalist->rdata, rdata, link);
+	RUNTIME_CHECK(dns_rdatalist_tordataset(rdatalist, rdataset)
+		      == ISC_R_SUCCESS);
+	rdataset->trust = dns_trust_secure;
+
+	query_addrrset(client, &aname, &rdataset, NULL, NULL,
+		       DNS_SECTION_ANSWER);
+	if (rdataset != NULL) {
+		if (dns_rdataset_isassociated(rdataset))
+			dns_rdataset_disassociate(rdataset);
+		dns_message_puttemprdataset(client->message, &rdataset);
+	}
+	if (aname != NULL)
+		dns_message_puttempname(client->message, &aname);
+
+	return (ISC_R_SUCCESS);
+}
+
+/*
  * Mark the RRsets as secure.  Update the cache (db) to reflect the
  * change in trust level.
  */

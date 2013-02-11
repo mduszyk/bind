@@ -4,12 +4,12 @@
 typedef struct supervisor {
     void *zmq_ctx;
     void *zmq_sock_rpc;
-    char *zmq_addr_rpc;
+    const char *zmq_addr_rpc;
 } supervisor_t;
 
 typedef struct supervisor_query {
     char *domain;
-    char *peer_ip;
+    char *peer;
     char *rsp;
     unsigned int rsp_len;
 } supervisor_query_t;

@@ -1,26 +1,27 @@
+#include <errno.h>
 #include <zmq.h>
 
 #include <named/supervisor.h>
-#include <named/log.h>
 
 int supervisor_init(supervisor_t *sv, const char *zmq_addr_rpc) {
     sv->zmq_ctx = zmq_ctx_new();
     if (sv->zmq_ctx == NULL) {
+        supervisor_log(ISC_LOG_ERROR, "error creating zmq context");
         return -1;
     }
     sv->zmq_addr_rpc = zmq_addr_rpc;
     sv->zmq_sock_rpc = zmq_socket(sv->zmq_ctx, ZMQ_REQ);
     if (sv->zmq_sock_rpc == NULL) {
+        supervisor_log(ISC_LOG_ERROR, "error creating zmq socket: %s", zmq_addr_rpc);
         return -1;
     }
     if (zmq_connect(sv->zmq_sock_rpc, zmq_addr_rpc) == -1) {
-        // TODO strerror(errno)
+        supervisor_log(ISC_LOG_ERROR, "error connecting zmq socket: %s, msg: %s",
+            zmq_addr_rpc, strerror(errno));
         return -1;
     }
     
-    //NS_LOGCATEGORY_UNMATCHED
-    isc_log_write(ns_g_lctx, NS_LOGCATEGORY_CLIENT, NS_LOGMODULE_CLIENT, ISC_LOG_INFO,
-          "supervisor initialized");
+    supervisor_log(ISC_LOG_INFO, "initialized supervisor context");
     
     return 0;
 }
@@ -28,6 +29,7 @@ int supervisor_init(supervisor_t *sv, const char *zmq_addr_rpc) {
 int supervisor_destroy(supervisor_t *sv) {
     zmq_close(sv->zmq_sock_rpc);
     zmq_ctx_destroy(sv->zmq_ctx);
+    supervisor_log(ISC_LOG_DEBUG(1), "supervisor destroyed");
     
     return 0;
 }

@@ -45,6 +45,7 @@ static isc_logcategory_t categories[] = {
 	{ "unmatched",	 		0 },
 	{ "update-security",		0 },
 	{ "query-errors",		0 },
+    { "supervisor",	 		0 },
 	{ NULL, 			0 }
 };
 
@@ -64,6 +65,7 @@ static isc_logmodule_t modules[] = {
 	{ "notify",	 		0 },
 	{ "control",	 		0 },
 	{ "lwresd",	 		0 },
+    { "supervisor",	 		0 },
 	{ NULL, 			0 }
 };
 

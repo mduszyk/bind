@@ -1,3 +1,5 @@
+#include <named/log.h>
+
 #ifndef NAMED_SUPERVISOR_H
 #define NAMED_SUPERVISOR_H 1
 
@@ -19,5 +21,8 @@ int supervisor_init(supervisor_t *sv, const char *zmq_addr_rpc);
 int supervisor_destroy(supervisor_t *sv);
 
 int supervisor_call(supervisor_t *sv, supervisor_query_t *query);
+
+#define supervisor_log(log_level, format, ...) isc_log_write(ns_g_lctx, NS_LOGCATEGORY_SUPERVISOR, \
+    NS_LOGMODULE_SUPERVISOR, log_level, format, ##__VA_ARGS__)
 
 #endif /* NAMED_SUPERVISOR_H */

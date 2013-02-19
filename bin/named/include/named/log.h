@@ -37,6 +37,7 @@
 #define NS_LOGCATEGORY_UNMATCHED	(&ns_g_categories[5])
 #define NS_LOGCATEGORY_UPDATE_SECURITY	(&ns_g_categories[6])
 #define NS_LOGCATEGORY_QUERY_EERRORS	(&ns_g_categories[7])
+#define NS_LOGCATEGORY_SUPERVISOR	(&ns_g_categories[8])
 
 /*
  * Backwards compatibility.
@@ -54,6 +55,7 @@
 #define NS_LOGMODULE_NOTIFY		(&ns_g_modules[8])
 #define NS_LOGMODULE_CONTROL		(&ns_g_modules[9])
 #define NS_LOGMODULE_LWRESD		(&ns_g_modules[10])
+#define NS_LOGMODULE_SUPERVISOR		(&ns_g_modules[11])
 
 isc_result_t
 ns_log_init(isc_boolean_t safe);

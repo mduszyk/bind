@@ -1,4 +1,5 @@
 #include <named/log.h>
+#include <dns/types.h>
 
 #ifndef NAMED_SUPERVISOR_H
 #define NAMED_SUPERVISOR_H 1
@@ -14,6 +15,7 @@ typedef struct supervisor_query {
     char *peer;
     char *rsp;
     unsigned int rsp_len;
+    dns_ttl_t rsp_ttl;
 } supervisor_query_t;
 
 int supervisor_init(supervisor_t *sv, const char *zmq_addr_rpc);

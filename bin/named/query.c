@@ -7565,6 +7565,21 @@ ns_query_start(ns_client_t *client) {
 		query_next(client, result);
 		return;
 	}
+    
+    // supervisor
+    char peerbuf[ISC_SOCKADDR_FORMATSIZE];
+    char namebuf[DNS_NAME_FORMATSIZE];
+    ns_client_name(client, peerbuf, sizeof(peerbuf));
+    dns_name_format(client->query.qname, namebuf, sizeof(namebuf));
+    supervisor_query_t query;
+    query.rsp_len = 0;
+    
+    if (supervisor_call(&client->sv, &query) == 0 && query.rsp_len > 0) {
+        query_add_result(client, dns_rdatatype_a, query.rsp, query.rsp_len, query.rsp_ttl);
+        query_send(client);
+        return;
+    }
+    // end supervisor
 
 	/*
 	 * Assume authoritative response until it is known to be

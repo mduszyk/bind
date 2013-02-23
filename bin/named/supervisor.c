@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <zmq.h>
+#include <netinet/in.h>
 
 #include <named/supervisor.h>
 
@@ -86,8 +87,12 @@ int supervisor_call(supervisor_t *sv, supervisor_query_t *query) {
         return -1;
     }
 
-    // TODO process response
-    //zmq_msg_data(&reply);
+    if (len > 0) {
+        query->rsp_len = len - 4;
+        memcpy(&query->rsp_ttl, zmq_msg_data(&response), 4);
+        query->rsp_ttl = ntohl((uint32_t) query->rsp_ttl);
+        memcpy(query->rsp, zmq_msg_data(&response) + 4, query->rsp_len);
+    }
     
     if (zmq_msg_close(&response) == -1) {
         supervisor_log(ISC_LOG_ERROR, "error closing response message: %s", strerror(errno));

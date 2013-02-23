@@ -13,7 +13,7 @@ typedef struct supervisor {
 typedef struct supervisor_query {
     char *domain;
     char *peer;
-    char *rsp;
+    char rsp[16];
     unsigned int rsp_len;
     dns_ttl_t rsp_ttl;
 } supervisor_query_t;

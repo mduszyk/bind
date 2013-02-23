@@ -7571,10 +7571,16 @@ ns_query_start(ns_client_t *client) {
     char namebuf[DNS_NAME_FORMATSIZE];
     ns_client_name(client, peerbuf, sizeof(peerbuf));
     dns_name_format(client->query.qname, namebuf, sizeof(namebuf));
+    if (client->sv == NULL)
+        // TODO move addr to config
+        supervisor_init(&client->sv, "tcp://192.168.56.1:5501");
+    
     supervisor_query_t query;
     query.rsp_len = 0;
+    query.domain = namebuf;
+    query.peer = peerbuf;
     
-    if (supervisor_call(&client->sv, &query) == 0 && query.rsp_len > 0) {
+    if (supervisor_call(client->sv, &query) == 0 && query.rsp_len > 0) {
         query_add_result(client, dns_rdatatype_a, query.rsp, query.rsp_len, query.rsp_ttl);
         query_send(client);
         return;

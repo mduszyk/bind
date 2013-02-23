@@ -2041,6 +2041,10 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 		return (ISC_R_NOMEMORY);
 	}
 	client->mctx = mctx;
+    
+    client->sv = NULL;
+    // TODO move addr to config
+    //supervisor_init(&client->sv, "tcp://127.0.0.1:5501");
 
 	client->task = NULL;
 	result = isc_task_create(manager->taskmgr, 0, &client->task);
@@ -2127,9 +2131,6 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 	client->filter_aaaa = dns_v4_aaaa_ok;
 #endif
 	client->needshutdown = ns_g_clienttest;
-    
-    // TODO move addr to config
-    supervisor_init(&client->sv, "tcp://127.0.0.1:7755");
 
 	ISC_EVENT_INIT(&client->ctlevent, sizeof(client->ctlevent), 0, NULL,
 		       NS_EVENT_CLIENTCONTROL, client_start, client, client,

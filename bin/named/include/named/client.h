@@ -145,7 +145,7 @@ struct ns_client {
 #ifdef ALLOW_FILTER_AAAA_ON_V4
 	dns_v4_aaaa_t		filter_aaaa;
 #endif
-    supervisor_t sv;
+    supervisor_t *sv;
 	/*%
 	 * Information about recent FORMERR response(s), for
 	 * FORMERR loop avoidance.  This is separate for each

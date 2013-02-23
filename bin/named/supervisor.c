@@ -3,8 +3,10 @@
 
 #include <named/supervisor.h>
 
-int supervisor_init(supervisor_t *sv, const char *zmq_addr_rpc) {
+int supervisor_init(supervisor_t **supervisor, const char *zmq_addr_rpc) {
     int timeout = 1000;
+    
+    supervisor_t *sv = (supervisor_t*) malloc(sizeof(supervisor_t));
     
     sv->zmq_ctx = zmq_ctx_new();
     if (sv->zmq_ctx == NULL) {
@@ -32,6 +34,8 @@ int supervisor_init(supervisor_t *sv, const char *zmq_addr_rpc) {
         return -1;
     }
     
+    *supervisor = sv;
+    
     supervisor_log(ISC_LOG_INFO, "initialized supervisor context");
     
     return 0;
@@ -40,8 +44,9 @@ int supervisor_init(supervisor_t *sv, const char *zmq_addr_rpc) {
 int supervisor_destroy(supervisor_t *sv) {
     zmq_close(sv->zmq_sock_rpc);
     zmq_ctx_destroy(sv->zmq_ctx);
+    free(sv);
     supervisor_log(ISC_LOG_DEBUG(1), "supervisor destroyed");
-    
+
     return 0;
 }
 
@@ -56,27 +61,31 @@ int supervisor_call(supervisor_t *sv, supervisor_query_t *query) {
         supervisor_log(ISC_LOG_ERROR, "error initializing request message: %s", strerror(errno));
         return -1;
     }
+    
     memcpy(zmq_msg_data(&request), query->domain, domain_len + 1);
     memcpy(zmq_msg_data(&request) + domain_len + 1, query->peer, peer_len);
+    
     if (zmq_msg_send(&request, sv->zmq_sock_rpc, 0) == -1) {
         supervisor_log(ISC_LOG_ERROR, "error sending message: %s", strerror(errno));
         return -1;
     }
+    
     if (zmq_msg_close(&request) == -1) {
         supervisor_log(ISC_LOG_ERROR, "error closing request message: %s", strerror(errno));
         return -1;
     }
-
+    
     if (zmq_msg_init(&response) == -1) {
         supervisor_log(ISC_LOG_ERROR, "error initializing response message: %s", strerror(errno));
         return -1;
     }
+    
     len = zmq_msg_recv(&response, sv->zmq_sock_rpc, 0);
     if (len == -1) {
         supervisor_log(ISC_LOG_ERROR, "error receiving message: %s", strerror(errno));
         return -1;
     }
-    
+
     // TODO process response
     //zmq_msg_data(&reply);
     

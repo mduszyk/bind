@@ -18,7 +18,7 @@ typedef struct supervisor_query {
     dns_ttl_t rsp_ttl;
 } supervisor_query_t;
 
-int supervisor_init(supervisor_t *sv, const char *zmq_addr_rpc);
+int supervisor_init(supervisor_t **sv, const char *zmq_addr_rpc);
 
 int supervisor_destroy(supervisor_t *sv);
 

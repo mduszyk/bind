@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <zmq.h>
 #include <netinet/in.h>
+#include <stdlib.h>
 
 #include <named/supervisor.h>
 
@@ -56,15 +57,15 @@ int supervisor_call(supervisor_t *sv, supervisor_query_t *query) {
     zmq_msg_t request;
     zmq_msg_t response;
     size_t domain_len = strlen(query->domain);
-    size_t peer_len = strlen(query->peer);
     
-    if (zmq_msg_init_size(&request, domain_len + peer_len + 1) == -1) {
+    if (zmq_msg_init_size(&request, 1 + query->peer_len + domain_len) == -1) {
         supervisor_log(ISC_LOG_ERROR, "error initializing request message: %s", strerror(errno));
         return -1;
     }
     
-    memcpy(zmq_msg_data(&request), query->domain, domain_len + 1);
-    memcpy(zmq_msg_data(&request) + domain_len + 1, query->peer, peer_len);
+    memcpy(zmq_msg_data(&request), &query->peer_len, 1);
+    memcpy(zmq_msg_data(&request) + 1, query->peer, query->peer_len);
+    memcpy(zmq_msg_data(&request) + 1 + query->peer_len, query->domain, domain_len);
     
     if (zmq_msg_send(&request, sv->zmq_sock_rpc, 0) == -1) {
         supervisor_log(ISC_LOG_ERROR, "error sending message: %s", strerror(errno));

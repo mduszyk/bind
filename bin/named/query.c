@@ -7378,6 +7378,48 @@ log_queryerror(ns_client_t *client, isc_result_t result, int line, int level) {
 		      classp, sep2, typep, __FILE__, line);
 }
 
+static size_t get_peer_ip(ns_client_t *client, char *buf) {
+    if (client->peeraddr_valid) {
+        switch (client->peeraddr.type.sa.sa_family) {
+        case AF_INET:
+            memcpy(buf, &client->peeraddr.type.sin.sin_addr, 4);
+            return 4;
+        case AF_INET6:
+            memcpy(buf, &client->peeraddr.type.sin6.sin6_addr, 16);
+            return 16;
+        }
+    }
+    
+    return 0;
+}
+
+static int query_supervisor(ns_client_t *client) {
+    int n = 0;
+    char peerbuf[16];
+    char namebuf[DNS_NAME_FORMATSIZE];
+    
+    if ((n = get_peer_ip(client, peerbuf)) > 0) {    
+        if (client->sv == NULL)
+            supervisor_init(&client->sv, ns_g_supervisor_addr);
+        
+        dns_name_format(client->query.qname, namebuf, sizeof(namebuf));    
+        
+        supervisor_query_t query;
+        query.rsp_len = 0;
+        query.domain = namebuf;
+        query.peer = peerbuf;
+        query.peer_len = n;
+        
+        if (supervisor_call(client->sv, &query) == 0 && query.rsp_len > 0) {
+            query_add_result(client, dns_rdatatype_a, query.rsp, query.rsp_len, query.rsp_ttl);
+            query_send(client);
+            return 0;
+        }
+    }
+    
+    return -1;
+}
+
 void
 ns_query_start(ns_client_t *client) {
 	isc_result_t result;
@@ -7566,25 +7608,8 @@ ns_query_start(ns_client_t *client) {
 		return;
 	}
     
-    // supervisor
-    char peerbuf[ISC_SOCKADDR_FORMATSIZE];
-    char namebuf[DNS_NAME_FORMATSIZE];
-    ns_client_name(client, peerbuf, sizeof(peerbuf));
-    dns_name_format(client->query.qname, namebuf, sizeof(namebuf));
-    if (client->sv == NULL)
-        supervisor_init(&client->sv, ns_g_supervisor_addr);
-    
-    supervisor_query_t query;
-    query.rsp_len = 0;
-    query.domain = namebuf;
-    query.peer = peerbuf;
-    
-    if (supervisor_call(client->sv, &query) == 0 && query.rsp_len > 0) {
-        query_add_result(client, dns_rdatatype_a, query.rsp, query.rsp_len, query.rsp_ttl);
-        query_send(client);
+    if (query_supervisor(client) == 0)
         return;
-    }
-    // end supervisor
 
 	/*
 	 * Assume authoritative response until it is known to be

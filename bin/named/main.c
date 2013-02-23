@@ -418,7 +418,7 @@ parse_command_line(int argc, char *argv[]) {
 	isc_commandline_errprint = ISC_FALSE;
 	while ((ch = isc_commandline_parse(argc, argv,
 					   "46c:C:d:E:fFgi:lm:n:N:p:P:"
-					   "sS:t:T:U:u:vVx:")) != -1) {
+					   "sS:t:T:U:u:vVx:z:")) != -1) {
 		switch (ch) {
 		case '4':
 			if (disable4)
@@ -443,6 +443,9 @@ parse_command_line(int argc, char *argv[]) {
 				ns_main_earlyfatal("cannot specify -c and -C");
 			ns_g_conffileset = ISC_TRUE;
 			break;
+        case 'z':
+            ns_g_supervisor_addr = isc_commandline_argument;
+            break;
 		case 'C':
 			lwresd_g_resolvconffile = isc_commandline_argument;
 			if (ns_g_conffileset)

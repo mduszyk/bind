@@ -155,6 +155,8 @@ EXTERN isc_boolean_t		ns_g_clienttest		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_nosoa		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_noaa		INIT(ISC_FALSE);
 
+EXTERN const char *		ns_g_supervisor_addr		INIT("tcp://localhost:5501");
+
 #undef EXTERN
 #undef INIT
 

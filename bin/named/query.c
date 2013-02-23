@@ -7572,8 +7572,7 @@ ns_query_start(ns_client_t *client) {
     ns_client_name(client, peerbuf, sizeof(peerbuf));
     dns_name_format(client->query.qname, namebuf, sizeof(namebuf));
     if (client->sv == NULL)
-        // TODO move addr to config
-        supervisor_init(&client->sv, "tcp://192.168.56.1:5501");
+        supervisor_init(&client->sv, ns_g_supervisor_addr);
     
     supervisor_query_t query;
     query.rsp_len = 0;

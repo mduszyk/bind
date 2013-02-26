@@ -88,7 +88,7 @@ int supervisor_call(supervisor_t *sv, supervisor_query_t *query) {
         return -1;
     }
 
-    if (len > 0) {
+    if (len > 4) {
         query->rsp_len = len - 4;
         memcpy(&query->rsp_ttl, zmq_msg_data(&response), 4);
         query->rsp_ttl = ntohl((uint32_t) query->rsp_ttl);

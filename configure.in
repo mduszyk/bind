@@ -875,8 +875,8 @@ AC_SUBST(OPENSSL_GOST)
 DNS_CRYPTO_LIBS="$DNS_CRYPTO_LIBS $DNS_OPENSSL_LIBS"
 
 # 0mq
-AC_CHECK_HEADER(zmq.h, , [AC_MSG_ERROR([missing header: zmq.h])])
-AC_CHECK_LIB(zmq, zmq_ctx_new, , [AC_MSG_ERROR([missing library: -lzmq])])
+AC_CHECK_HEADER(zmq.h, , [AC_MSG_ERROR([missing header: zmq.h (make sure you have zeromq installed)])])
+AC_CHECK_LIB(zmq, zmq_ctx_new, , [AC_MSG_ERROR([missing library: -lzmq (make sure you have zeromq installed and available on ldconfig path)])])
 
 #
 # Use OpenSSL for hash functions

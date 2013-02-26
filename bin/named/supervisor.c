@@ -36,7 +36,7 @@ int supervisor_init(supervisor_t **supervisor, const char *zmq_addr_rpc) {
     
     *supervisor = sv;
     
-    supervisor_log(ISC_LOG_INFO, "connected to broker: %s", zmq_addr_rpc);
+    supervisor_log(ISC_LOG_INFO, "created zmq client socket: %s", zmq_addr_rpc);
     
     return 0;
 }

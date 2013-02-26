@@ -5,9 +5,9 @@
 
 #include <named/supervisor.h>
 
-int supervisor_init(supervisor_t **supervisor, const char *zmq_addr_rpc) {
-    int timeout = 1000;
-    
+static int daoc_true = 1;
+
+int supervisor_init(supervisor_t **supervisor, const char *zmq_addr_rpc) {    
     supervisor_t *sv = (supervisor_t*) malloc(sizeof(supervisor_t));
     
     sv->zmq_ctx = zmq_ctx_new();
@@ -21,12 +21,10 @@ int supervisor_init(supervisor_t **supervisor, const char *zmq_addr_rpc) {
         supervisor_log(ISC_LOG_ERROR, "error creating zmq socket: %s", zmq_addr_rpc);
         return -1;
     }
-    if (zmq_setsockopt (sv->zmq_sock_rpc, ZMQ_RCVTIMEO, &timeout, 4) == -1) {
+    
+    if (zmq_setsockopt (sv->zmq_sock_rpc, ZMQ_DELAY_ATTACH_ON_CONNECT,
+            &daoc_true, sizeof(int)) == -1) {
         supervisor_log(ISC_LOG_ERROR, "unable to set zmq socket recv timeout");
-        return -1;
-    }
-    if (zmq_setsockopt (sv->zmq_sock_rpc, ZMQ_SNDTIMEO, &timeout, 4) == -1) {
-        supervisor_log(ISC_LOG_ERROR, "unable to set zmq socket send timeout");
         return -1;
     }
     
@@ -67,7 +65,7 @@ int supervisor_call(supervisor_t *sv, supervisor_query_t *query) {
     memcpy(zmq_msg_data(&request) + 1, query->peer, query->peer_len);
     memcpy(zmq_msg_data(&request) + 1 + query->peer_len, query->domain, domain_len);
     
-    if (zmq_msg_send(&request, sv->zmq_sock_rpc, 0) == -1) {
+    if (zmq_msg_send(&request, sv->zmq_sock_rpc, ZMQ_DONTWAIT) == -1) {
         supervisor_log(ISC_LOG_ERROR, "error sending message: %s", strerror(errno));
         return -1;
     }

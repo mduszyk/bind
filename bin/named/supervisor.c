@@ -80,8 +80,7 @@ int supervisor_call(supervisor_t *sv, supervisor_query_t *query) {
         return -1;
     }
     
-    len = zmq_msg_recv(&response, sv->zmq_sock_rpc, 0);
-    if (len == -1) {
+    if ((len = zmq_msg_recv(&response, sv->zmq_sock_rpc, 0)) == -1) {
         supervisor_log(ISC_LOG_ERROR, "error receiving message: %s", strerror(errno));
         return -1;
     }

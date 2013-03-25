@@ -7422,12 +7422,12 @@ static int query_supervisor(ns_client_t *client) {
     query.rsp = rspbuf;
 
     if ((n = get_peer_ip(client, peerbuf)) > 0) {
-        if (n == 16)
+        if (16 == n)
             query.flags |= SUPERVISOR_PEER_IPV6;
             
         if ((n = get_dest_ip(client, destbuf)) > 0) {
             query.flags |= SUPERVISOR_DEST;
-            if (n = 16)
+            if (16 == n)
                 query.flags |= SUPERVISOR_DEST_IPV6;
         }
             

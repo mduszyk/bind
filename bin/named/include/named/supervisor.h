@@ -4,6 +4,12 @@
 #ifndef NAMED_SUPERVISOR_H
 #define NAMED_SUPERVISOR_H 1
 
+
+#define SUPERVISOR_PEER_IPV6 0x80
+#define SUPERVISOR_DEST 0x40
+#define SUPERVISOR_DEST_IPV6 0x20
+
+
 typedef struct supervisor {
     void *zmq_ctx;
     void *zmq_sock_rpc;
@@ -11,12 +17,13 @@ typedef struct supervisor {
 } supervisor_t;
 
 typedef struct supervisor_query {
+    unsigned char flags;
+    char *peer_ip;
+    char *dest_ip;
     char *domain;
-    char *peer;
-    unsigned char peer_len;
-    char rsp[16];
     unsigned int rsp_len;
     dns_ttl_t rsp_ttl;
+    char *rsp;
 } supervisor_query_t;
 
 int supervisor_init(supervisor_t **sv, const char *zmq_addr_rpc);

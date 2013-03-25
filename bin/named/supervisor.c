@@ -50,20 +50,56 @@ int supervisor_destroy(supervisor_t *sv) {
     return 0;
 }
 
+/**
+ *   msb  .....  lsb
+ * 0b a b c 0 0 0 0 0
+ *  | | | | | | | |
+ *  | | | | | | | \- zero
+ *  | | | | | | \--- zero
+ *  | | | | | \----- zero
+ *  | | | | \------- zero
+ *  | | | \--------- zero
+ *  | | \----------- if 0 then bind_ip is ipv4; if 1 then ipv6
+ *  | \------------- if 1 then bind_ip present in message
+ *  \--------------- if 0 then client_ip is ipv4; if 1 then ipv6
+ * 
+ * next 4 bytes (or 16 if "a" is 1) are ip of client
+ * 
+ * if "b" is 1 then
+ *   if "c" is 0 then
+ *     next 4 bytes are ip of bind server
+ *   if "c" is 1 then
+ *     next 16 bytes are ip of bind server
+ * 
+ * next bytes till the end are the domain itself
+ */
 int supervisor_call(supervisor_t *sv, supervisor_query_t *query) {
-    int len;
+    int len, n = 0;
     zmq_msg_t request;
     zmq_msg_t response;
     size_t domain_len = strlen(query->domain);
+    size_t peer_len = SUPERVISOR_PEER_IPV6 == (query->flags & SUPERVISOR_PEER_IPV6) ? 16 : 4;
+    size_t dest_len = 0;
+
+    if (SUPERVISOR_DEST == (query->flags & SUPERVISOR_DEST))
+        dest_len = SUPERVISOR_DEST_IPV6 == (query->flags & SUPERVISOR_DEST_IPV6) ? 16 : 4;
     
-    if (zmq_msg_init_size(&request, 1 + query->peer_len + domain_len) == -1) {
+    if (zmq_msg_init_size(&request, 1 + peer_len + dest_len + domain_len) == -1) {
         supervisor_log(ISC_LOG_ERROR, "error initializing request message: %s", strerror(errno));
         return -1;
     }
     
-    memcpy(zmq_msg_data(&request), &query->peer_len, 1);
-    memcpy(zmq_msg_data(&request) + 1, query->peer, query->peer_len);
-    memcpy(zmq_msg_data(&request) + 1 + query->peer_len, query->domain, domain_len);
+    memcpy(zmq_msg_data(&request), &query->flags, 1);
+    
+    memcpy(zmq_msg_data(&request) + ++n, query->peer_ip, peer_len);
+    n += peer_len;
+    
+    if (dest_len > 0) {
+        memcpy(zmq_msg_data(&request) + n, query->dest_ip, dest_len);
+        n += dest_len;
+    }
+    
+    memcpy(zmq_msg_data(&request) + n, query->domain, domain_len);
     
     if (zmq_msg_send(&request, sv->zmq_sock_rpc, ZMQ_DONTWAIT) == -1) {
         supervisor_log(ISC_LOG_ERROR, "error sending message: %s", strerror(errno));

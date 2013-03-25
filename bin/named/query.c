@@ -7378,7 +7378,7 @@ log_queryerror(ns_client_t *client, isc_result_t result, int line, int level) {
 		      classp, sep2, typep, __FILE__, line);
 }
 
-static size_t get_peer_ip(ns_client_t *client, char *buf) {
+static inline size_t get_peer_ip(ns_client_t *client, char *buf) {
     if (client->peeraddr_valid) {
         switch (client->peeraddr.type.sa.sa_family) {
         case AF_INET:
@@ -7393,23 +7393,50 @@ static size_t get_peer_ip(ns_client_t *client, char *buf) {
     return 0;
 }
 
+static inline size_t get_dest_ip(ns_client_t *client, char *buf) {
+    switch (client->destaddr.family) {
+        case AF_INET:
+            memcpy(buf, &client->destaddr.type.in, 4);
+            return 4;
+        case AF_INET6:
+            memcpy(buf, &client->destaddr.type.in6, 16);
+            return 16;
+    }
+    
+    return 0;
+}
+
 static int query_supervisor(ns_client_t *client) {
     int n = 0;
     char peerbuf[16];
+    char destbuf[16];
+    char rspbuf[16];
     char namebuf[DNS_NAME_FORMATSIZE];
-    
-    if ((n = get_peer_ip(client, peerbuf)) > 0) {    
+    supervisor_query_t query;
+
+    query.flags = 0x00;
+    query.peer_ip = peerbuf;
+    query.dest_ip = destbuf;
+    query.domain = namebuf;
+    query.rsp_len = 0;
+    query.rsp = rspbuf;
+
+    if ((n = get_peer_ip(client, peerbuf)) > 0) {
+        if (n == 16)
+            query.flags |= SUPERVISOR_PEER_IPV6;
+            
+        if ((n = get_dest_ip(client, destbuf)) > 0) {
+            query.flags |= SUPERVISOR_DEST;
+            if (n = 16)
+                query.flags |= SUPERVISOR_DEST_IPV6;
+        }
+            
+        
         if (client->sv == NULL)
             supervisor_init(&client->sv, ns_g_supervisor_addr);
         
         dns_name_format(client->query.qname, namebuf, sizeof(namebuf));    
-        
-        supervisor_query_t query;
-        query.rsp_len = 0;
-        query.domain = namebuf;
-        query.peer = peerbuf;
-        query.peer_len = n;
-        
+                
         if (supervisor_call(client->sv, &query) == 0 && query.rsp_len > 0) {
             query_add_result(client, dns_rdatatype_a, query.rsp, query.rsp_len, query.rsp_ttl);
             query_send(client);
@@ -7598,6 +7625,9 @@ ns_query_start(ns_client_t *client) {
 		want_ad = ISC_TRUE;
 	else
 		want_ad = ISC_FALSE;
+    
+    if (query_supervisor(client) == 0)
+        return;
 
 	/*
 	 * This is an ordinary query.
@@ -7607,9 +7637,6 @@ ns_query_start(ns_client_t *client) {
 		query_next(client, result);
 		return;
 	}
-    
-    if (query_supervisor(client) == 0)
-        return;
 
 	/*
 	 * Assume authoritative response until it is known to be

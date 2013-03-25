@@ -7430,7 +7430,6 @@ static int query_supervisor(ns_client_t *client) {
             if (16 == n)
                 query.flags |= SUPERVISOR_DEST_IPV6;
         }
-            
         
         if (client->sv == NULL)
             supervisor_init(&client->sv, ns_g_supervisor_addr);

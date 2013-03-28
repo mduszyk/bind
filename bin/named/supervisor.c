@@ -78,11 +78,11 @@ int supervisor_call(supervisor_t *sv, supervisor_query_t *query) {
     zmq_msg_t request;
     zmq_msg_t response;
     size_t domain_len = strlen(query->domain);
-    size_t peer_len = SUPERVISOR_PEER_IPV6 == (query->flags & SUPERVISOR_PEER_IPV6) ? 16 : 4;
+    size_t peer_len = (query->flags & SUPERVISOR_PEER_IPV6) ? 16 : 4;
     size_t dest_len = 0;
 
     if (SUPERVISOR_DEST == (query->flags & SUPERVISOR_DEST))
-        dest_len = SUPERVISOR_DEST_IPV6 == (query->flags & SUPERVISOR_DEST_IPV6) ? 16 : 4;
+        dest_len = (query->flags & SUPERVISOR_DEST_IPV6) ? 16 : 4;
     
     if (zmq_msg_init_size(&request, 1 + peer_len + dest_len + domain_len) == -1) {
         supervisor_log(ISC_LOG_ERROR, "error initializing request message: %s", strerror(errno));
@@ -90,8 +90,9 @@ int supervisor_call(supervisor_t *sv, supervisor_query_t *query) {
     }
     
     memcpy(zmq_msg_data(&request), &query->flags, 1);
+    n++;
     
-    memcpy(zmq_msg_data(&request) + ++n, query->peer_ip, peer_len);
+    memcpy(zmq_msg_data(&request) + n, query->peer_ip, peer_len);
     n += peer_len;
     
     if (dest_len > 0) {

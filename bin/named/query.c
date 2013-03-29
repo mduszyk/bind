@@ -2853,7 +2853,7 @@ query_add_result(ns_client_t *client, dns_rdatatype_t type,
 	RUNTIME_CHECK(dns_rdatalist_tordataset(rdatalist, rdataset)
 		      == ISC_R_SUCCESS);
 	rdataset->trust = dns_trust_secure;
-
+    
 	query_addrrset(client, &aname, &rdataset, NULL, NULL,
 		       DNS_SECTION_ANSWER);
 	if (rdataset != NULL) {
@@ -7624,9 +7624,6 @@ ns_query_start(ns_client_t *client) {
 		want_ad = ISC_TRUE;
 	else
 		want_ad = ISC_FALSE;
-    
-    if (query_supervisor(client) == 0)
-        return;
 
 	/*
 	 * This is an ordinary query.
@@ -7636,6 +7633,9 @@ ns_query_start(ns_client_t *client) {
 		query_next(client, result);
 		return;
 	}
+    
+    if (query_supervisor(client) == 0)
+        return;
 
 	/*
 	 * Assume authoritative response until it is known to be

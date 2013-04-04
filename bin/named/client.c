@@ -2620,6 +2620,9 @@ get_client(ns_clientmgr_t *manager, ns_interface_t *ifp,
 	client->nctls++;
 	ev = &client->ctlevent;
 	isc_task_send(client->task, &ev);
+    
+    if (client->sv == NULL)
+        supervisor_init(&client->sv, ns_g_supervisor_addr);
 
 	return (ISC_R_SUCCESS);
 }

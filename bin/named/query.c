@@ -7431,8 +7431,8 @@ static int query_supervisor(ns_client_t *client) {
                 query.flags |= SUPERVISOR_DEST_IPV6;
         }
         
-        if (client->sv == NULL)
-            supervisor_init(&client->sv, ns_g_supervisor_addr);
+        //if (client->sv == NULL)
+        //    supervisor_init(&client->sv, ns_g_supervisor_addr);
         
         dns_name_format(client->query.qname, namebuf, sizeof(namebuf));    
                 

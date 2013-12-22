@@ -1,3 +1,73 @@
+BIND with supervisor
+
+This project is a Bind 9.9.2-P1 extension which allows to control
+DNS responses. When client sends DNS query Bind asks supervisor
+what to do. Supervisor can instruct bind to proceed normally or
+to return specific ip address in reply.
+
+Supervisor is an external application which provides zeromq rpc
+interface (ZMQ_REP or ZMQ_ROUTER socket).
+
+dns query --> 53:bind ZMQ_REQ --> 5501:ZMQ_ROUTER supervisor
+
+
+REQUIREMENTS:
+- standard bind 9 dependencies
+- zeromq 3.2.2:
+    wget http://download.zeromq.org/zeromq-3.2.2.tar.gz
+    tar -zxf zeromq-3.2.2.tar.gz
+    cd zeromq-3.2.2
+    ./configure
+    make
+    make install
+    echo "/usr/local/lib" >> /etc/ld.so.conf
+    ldconfig
+
+
+INSTALL
+
+1. Compile and install bind:
+    cd bind
+    ./configure
+    make
+    make install
+
+
+RUNNING
+
+Start bind with -z option, it  allows to specify supervisor zmq address
+(default tcp://localhost:5501):
+    named -c named.conf -z tcp://192.168.56.1:5501
+
+
+SUPERVISOR PROTOCOL:
+
+   msb  .....  lsb
+ 0b a b c 0 0 0 0 0
+  | | | | | | | |
+  | | | | | | | \- zero
+  | | | | | | \--- zero
+  | | | | | \----- zero
+  | | | | \------- zero
+  | | | \--------- zero
+  | | \----------- if 0 then bind_ip is ipv4; if 1 then ipv6
+  | \------------- if 1 then bind_ip present in message
+  \--------------- if 0 then client_ip is ipv4; if 1 then ipv6
+ 
+ next 4 bytes (or 16 if "a" is 1) are ip of client
+ 
+ if "b" is 1 then
+   if "c" is 0 then
+     next 4 bytes are ip of bind server
+   if "c" is 1 then
+     next 16 bytes are ip of bind server
+ 
+ next bytes till the end are the domain itself
+
+ See: supervisor_call in bind/bin/named/supervisor.c 
+
+
+--------------------------------------------------------------------------------
 BIND 9
 
 	BIND version 9 is a major rewrite of nearly all aspects of the
